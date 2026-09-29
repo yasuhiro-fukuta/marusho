@@ -6,7 +6,7 @@ import styles from "./marusho.module.css";
 /** マルショーのWhatsApp番号(+81 80-8913-5569) */
 const MARUSHO_WA = "818089135569";
 
-type Category = "dinner" | "breakfast" | "drinks";
+type Category = "dinner" | "drinks";
 
 type Item = {
   id: string;
@@ -29,7 +29,6 @@ const ITEMS: Item[] = [
   { id: "soba", category: "dinner", en: "Soba & tempura", ja: "そば、てんぷら", note: "Vegetarian / vegan option", price: 2500 },
   { id: "kids", category: "dinner", en: "Children's set", ja: "お子様セット", price: 1500 },
   { id: "drinkset", category: "dinner", en: "Drink set", ja: "飲みセット", note: "Fried chicken, Kirin beer x2 & potato fries", price: 2000 },
-  { id: "breakfast", category: "breakfast", en: "Breakfast set", ja: "朝ごはんセット", note: "Sandwich, corn soup, yogurt & fruit", price: 1500 },
   { id: "beer", category: "drinks", en: "Kirin beer", ja: "キリンビール", price: 350 },
   { id: "orange", category: "drinks", en: "Orange juice", ja: "オレンジジュース", price: 350 },
   { id: "cola", category: "drinks", en: "Coca-Cola", ja: "コカ・コーラ", price: 350 },
@@ -40,7 +39,6 @@ const ITEMS: Item[] = [
 
 const SECTIONS: { key: Category; en: string; ja: string }[] = [
   { key: "dinner", en: "Dinner", ja: "夕食" },
-  { key: "breakfast", en: "Breakfast — next morning", ja: "朝食(翌朝)" },
   { key: "drinks", en: "Drinks", ja: "飲み物" },
 ];
 
@@ -55,8 +53,6 @@ const PLACES = [
 ];
 
 const DINNER_TIMES = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"];
-const BREAKFAST_WITH_DINNER = "with-dinner";
-const BREAKFAST_TIMES = ["7:00", "7:30", "8:00", "8:30", "9:00"];
 
 const WEEKDAY_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
@@ -64,9 +60,9 @@ const WEEKDAY_JA = ["日", "月", "火", "水", "木", "金", "土"];
 const yen = (n: number) => "¥" + n.toLocaleString("en-US");
 
 /** "2026-10-03" → { en: "Sat 3 Oct 2026", ja: "10月3日(土)" } */
-function formatDate(iso: string, addDays = 0) {
+function formatDate(iso: string) {
   const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d + addDays));
+  const dt = new Date(Date.UTC(y, m - 1, d));
   const month = dt.toLocaleString("en-GB", { month: "short", timeZone: "UTC" });
   const wd = dt.getUTCDay();
   return {
@@ -85,7 +81,6 @@ export default function OrderForm() {
   const [place, setPlace] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [breakfastTime, setBreakfastTime] = useState("");
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [confirmedUrl, setConfirmedUrl] = useState<string | null>(null);
@@ -94,8 +89,6 @@ export default function OrderForm() {
 
   const chosen = ITEMS.filter((it) => (qty[it.id] ?? 0) > 0);
   const total = chosen.reduce((s, it) => s + it.price * qty[it.id], 0);
-  const hasDinnerOrDrinks = chosen.some((it) => it.category !== "breakfast");
-  const hasBreakfast = chosen.some((it) => it.category === "breakfast");
   const minDate = useMemo(todayJst, []);
 
   // 内容を変えたら確定をやり直してもらう(古いリンクで送られないように)
@@ -117,23 +110,13 @@ export default function OrderForm() {
       `Place / 配達先: ${place}`,
       `Name / 名前: ${name.trim()}`,
       `Date / 日付: ${d.en} / ${d.ja}`,
+      `Delivery time / 配達時間: ${time}`,
     ];
-    if (hasDinnerOrDrinks) lines.push(`Delivery time / 配達時間: ${time}`);
 
     for (const sec of SECTIONS) {
       const items = chosen.filter((it) => it.category === sec.key);
       if (!items.length) continue;
-      lines.push("");
-      if (sec.key === "breakfast") {
-        const next = formatDate(date, 1);
-        lines.push(
-          breakfastTime === BREAKFAST_WITH_DINNER
-            ? "[Breakfast / 朝食] deliver with dinner / 夕食と一緒に配達"
-            : `[Breakfast / 朝食] ${next.en} ${breakfastTime} / ${next.ja} ${breakfastTime} 配達`,
-        );
-      } else {
-        lines.push(`[${sec.en} / ${sec.ja}]`);
-      }
+      lines.push("", `[${sec.en} / ${sec.ja}]`);
       for (const it of items) {
         lines.push(`- ${it.en} / ${it.ja} x ${qty[it.id]}`);
       }
@@ -151,9 +134,7 @@ export default function OrderForm() {
     if (!place) errs.push("Please choose where you are staying.");
     if (!date) errs.push("Please choose the date.");
     else if (date < minDate) errs.push("The date is in the past.");
-    if (hasDinnerOrDrinks && !time) errs.push("Please choose the delivery time.");
-    if (hasBreakfast && (!breakfastTime || (breakfastTime === BREAKFAST_WITH_DINNER && !hasDinnerOrDrinks)))
-      errs.push("Please choose when to deliver breakfast.");
+    if (!time) errs.push("Please choose the delivery time.");
     if (!name.trim()) errs.push("Please enter your name.");
     setErrors(errs);
     if (errs.length) {
@@ -245,35 +226,17 @@ export default function OrderForm() {
               onChange={(e) => edit(setDate)(e.target.value)}
             />
           </label>
-          {hasDinnerOrDrinks && (
-            <label>
-              <span>Delivery time (dinner & drinks) / 配達時間</span>
-              <select value={time} onChange={(e) => edit(setTime)(e.target.value)}>
-                <option value="">Choose…</option>
-                {DINNER_TIMES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          {hasBreakfast && (
-            <label>
-              <span>Breakfast delivery / 朝食の配達</span>
-              <select value={breakfastTime} onChange={(e) => edit(setBreakfastTime)(e.target.value)}>
-                <option value="">Choose…</option>
-                {hasDinnerOrDrinks && (
-                  <option value={BREAKFAST_WITH_DINNER}>Together with dinner (the evening before)</option>
-                )}
-                {BREAKFAST_TIMES.map((t) => (
-                  <option key={t} value={t}>
-                    Next morning {t}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+          <label>
+            <span>Delivery time / 配達時間</span>
+            <select value={time} onChange={(e) => edit(setTime)(e.target.value)}>
+              <option value="">Choose…</option>
+              {DINNER_TIMES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             <span>Your name / 名前</span>
             <input

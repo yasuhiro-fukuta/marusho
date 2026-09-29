@@ -5,7 +5,7 @@ import styles from "./marusho.module.css";
 export const metadata: Metadata = {
   title: "Marusho food delivery — order form / まるしょう 配達注文",
   description:
-    "Order dinner, breakfast and drinks from Marusho, delivered to your accommodation in Nagiso. Tick your items, confirm, and send the ready-made WhatsApp message.",
+    "Order dinner and drinks from Marusho, delivered to your accommodation in Nagiso. Tick your items, confirm, and send the ready-made WhatsApp message.",
   robots: { index: false },
 };
 
@@ -18,9 +18,8 @@ export default function MarushoPage() {
         </p>
         <h1>Marusho food delivery</h1>
         <p className={styles.lead}>
-          Marusho, a local shop in Nagiso, delivers dinner, breakfast and
-          drinks to your accommodation. Payment
-          is made locally to Marusho.
+          Marusho, a local shop in Nagiso, delivers dinner and drinks to
+          your accommodation. Payment is made locally to Marusho.
         </p>
         <ol className={styles.steps}>
           <li>Tick the items you want and set the quantities.</li>
