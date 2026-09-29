@@ -44,6 +44,16 @@ const SECTIONS: { key: Category; en: string; ja: string }[] = [
   { key: "drinks", en: "Drinks", ja: "飲み物" },
 ];
 
+/** 配達先(宿) */
+const PLACES = [
+  { ja: "柏屋1F", en: "Kashiwaya Inn ground floor" },
+  { ja: "柏屋2F", en: "Kashiwaya Inn upstairs" },
+  { ja: "柏屋一棟貸し", en: "Kashiwaya Inn whole house" },
+  { ja: "マウンテン", en: "MOUNTAinn Nagiso" },
+  { ja: "灯", en: "Akari" },
+  { ja: "雨中山道", en: "Ame Nakasendo" },
+];
+
 const DINNER_TIMES = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"];
 const BREAKFAST_WITH_DINNER = "with-dinner";
 const BREAKFAST_TIMES = ["7:00", "7:30", "8:00", "8:30", "9:00"];
@@ -72,6 +82,7 @@ function todayJst() {
 
 export default function OrderForm() {
   const [qty, setQty] = useState<Record<string, number>>({});
+  const [place, setPlace] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [breakfastTime, setBreakfastTime] = useState("");
@@ -101,9 +112,9 @@ export default function OrderForm() {
     const d = formatDate(date);
     const lines = [
       "Hello Marusho! / マルショー様",
-      "Delivery order to Kashiwaya Inn (whole house)",
-      "柏屋(一棟貸し)への配達注文です。",
+      "Delivery order / 配達注文です。",
       "",
+      `Place / 配達先: ${place}`,
       `Name / 名前: ${name.trim()}`,
       `Date / 日付: ${d.en} / ${d.ja}`,
     ];
@@ -137,6 +148,7 @@ export default function OrderForm() {
   function confirm() {
     const errs: string[] = [];
     if (!chosen.length) errs.push("Please choose at least one item.");
+    if (!place) errs.push("Please choose where you are staying.");
     if (!date) errs.push("Please choose the date.");
     else if (date < minDate) errs.push("The date is in the past.");
     if (hasDinnerOrDrinks && !time) errs.push("Please choose the delivery time.");
@@ -213,6 +225,17 @@ export default function OrderForm() {
           Delivery details <span>配達情報</span>
         </h2>
         <div className={styles.fields}>
+          <label>
+            <span>Place (where you stay) / 配達先</span>
+            <select value={place} onChange={(e) => edit(setPlace)(e.target.value)}>
+              <option value="">Choose…</option>
+              {PLACES.map((pl) => (
+                <option key={pl.ja} value={`${pl.ja} ${pl.en}`}>
+                  {pl.en} / {pl.ja}
+                </option>
+              ))}
+            </select>
+          </label>
           <label>
             <span>Date (night of your stay) / 日付</span>
             <input
