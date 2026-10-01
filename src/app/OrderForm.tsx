@@ -43,13 +43,19 @@ const SECTIONS: { key: Category; en: string; ja: string }[] = [
 ];
 
 /** 配達先(宿) */
-const PLACES = [
+const PLACES: { ja?: string; en: string }[] = [
   { ja: "柏屋1F", en: "Kashiwaya Inn ground floor" },
   { ja: "柏屋2F", en: "Kashiwaya Inn upstairs" },
   { ja: "柏屋一棟貸し", en: "Kashiwaya Inn whole house" },
   { ja: "マウンテン", en: "MOUNTAinn Nagiso" },
   { ja: "灯", en: "Akari" },
   { ja: "雨中山道", en: "Ame Nakasendo" },
+  { en: "Mugi house - Mountain escape" },
+  { en: "Yama Inn upstairs - Bridge view" },
+  { en: "Yama Inn ground floor - multi bedroom" },
+  { ja: "お宿 勝", en: "Oyado Katsu" },
+  { en: "DARUMA Premium inn" },
+  { en: "Tsumugi Tei" },
 ];
 
 const DINNER_TIMES = ["17:00", "17:30", "18:00", "18:30", "19:00", "19:30", "20:00"];
@@ -211,8 +217,8 @@ export default function OrderForm() {
             <select value={place} onChange={(e) => edit(setPlace)(e.target.value)}>
               <option value="">Choose…</option>
               {PLACES.map((pl) => (
-                <option key={pl.ja} value={`${pl.ja} ${pl.en}`}>
-                  {pl.en} / {pl.ja}
+                <option key={pl.en} value={pl.ja ? `${pl.ja} ${pl.en}` : pl.en}>
+                  {pl.ja ? `${pl.en} / ${pl.ja}` : pl.en}
                 </option>
               ))}
             </select>
